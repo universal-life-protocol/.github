@@ -1,3 +1,5 @@
 public/releases/
 public/status.json
 core-backup-*/
+core/**/.git
+core/**/**/.git
