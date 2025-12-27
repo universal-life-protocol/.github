@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Operations Checklist</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Operations</p>
+      <h1>Daily Checklist</h1>
+      <p class="lead">Simple, repeatable checks for a healthy system.</p>
+    </header>
+
+    <section class="panel">
+      <h2>Health checks</h2>
+      <ol>
+        <li>Open <code>/status/</code> and verify <code>ws</code> is active.</li>
+        <li>Open <code>/canvas/</code> and confirm nodes render.</li>
+        <li>Open <code>/gltf-live/</code> and confirm the preview animates.</li>
+        <li>Open <code>/wiki/</code> and verify the Welcome entry renders.</li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <h2>Update the bundle</h2>
+      <ol>
+        <li>Regenerate assets (if needed).</li>
+        <li>Rebuild the tarball: <code>tetragrammatron/public/releases/</code>.</li>
+        <li>Verify <code>/install.sh</code> still runs.</li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <h2>Backup</h2>
+      <ul>
+        <li>Archive <code>/home/main/tetragrammatron/public/releases/</code>.</li>
+        <li>Back up event logs in <code>/home/main/tetragrammatron/core/virtual-revelation/data/</code>.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

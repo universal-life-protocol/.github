@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Demo</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Interactive Demo</p>
+      <h1>See 2D, 3D, and Audio</h1>
+      <p class="lead">One click opens the core projections: SVG, GLTF, and Audio.</p>
+      <div class="cta">
+        <a class="button" href="/gltf-live/">Open Live GLTF</a>
+        <a class="button ghost" href="/canvas/">Open Canvas</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <a class="card" href="/world/world.svg">
+        <h2>SVG Artifact</h2>
+        <p>Deterministic 2D projection.</p>
+      </a>
+      <a class="card" href="/world/svg-gltf.gltf">
+        <h2>GLTF Artifact</h2>
+        <p>Deterministic 3D export.</p>
+      </a>
+      <a class="card" href="/world/world.physics-audio.wav">
+        <h2>Audio Artifact</h2>
+        <p>Audio projection of events.</p>
+      </a>
+    </section>
+
+    <section class="panel">
+      <h2>What this shows</h2>
+      <ul>
+        <li>Same events, multiple projections.</li>
+        <li>No mutable state, no hidden truth.</li>
+        <li>Artifacts are deterministic and replayable.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
