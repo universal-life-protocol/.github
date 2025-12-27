@@ -1,0 +1,20 @@
+[Unit]
+Description=Virtual Revelation WebSocket Server
+
+[Service]
+Type=simple
+Environment=TETRA_ROOT=%h/tetragrammatron
+WorkingDirectory=%h/tetragrammatron/core/virtual-revelation
+ExecStart=/bin/sh -lc 'ROOT="${TETRA_ROOT:-$HOME/tetragrammatron}"; node "$ROOT/core/virtual-revelation/pubsub/ws-server.ts"'
+Restart=on-failure
+RestartSec=3s
+
+# Hardening (user service)
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=%h/tetragrammatron/core/virtual-revelation/data
+
+[Install]
+WantedBy=default.target

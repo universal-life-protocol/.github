@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shared Scene (Stub)</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f7f2ea; color: #2c1f16; }
+    header { padding: 16px 20px; background: #fffdf7; border-bottom: 1px solid #e2d7c7; }
+    main { padding: 16px 20px; max-width: 900px; }
+    .card { background: #fffdf7; border: 1px solid #e2d7c7; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    pre { margin: 0; font-size: 12px; max-height: 240px; overflow: auto; }
+    .voxel-stage { position: relative; min-height: 220px; background: #fbf7f0; border: 1px solid #e2d7c7; border-radius: 10px; overflow: hidden; }
+    .voxel {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #2c1f16;
+      transform: translate(-50%, -50%);
+      box-shadow: 8px 8px 0 0 rgba(44, 31, 22, 0.2);
+      border: 1px solid rgba(44, 31, 22, 0.35);
+    }
+    .voxel.selected {
+      background: #a24b2d;
+      border-color: #a24b2d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Shared Scene (Stub)</h1>
+    <p>Renders <code>scene.transform</code> events from the shared log.</p>
+  </header>
+  <main>
+    <div class="card"><strong>Transport:</strong> <span id="transport-status">connecting</span></div>
+    <div class="card">
+      <h2>Share</h2>
+      <div class="row">
+        <div>
+          <label for="share-link">Link</label>
+          <input id="share-link" readonly />
+        </div>
+        <div>
+          <label>QR</label>
+          <div id="share-qr"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Transform</h2>
+      <label for="object">Object</label>
+      <input id="object" value="cube-01" />
+      <label for="matrix">Matrix (JSON array)</label>
+      <textarea id="matrix" rows="3" placeholder="[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]"></textarea>
+      <button id="submit">Emit Transform</button>
+      <p id="status"></p>
+    </div>
+    <div class="card">
+      <h2>Voxel Projection</h2>
+      <div class="voxel-stage" id="voxel-stage"></div>
+    </div>
+    <div class="card" id="scene"></div>
+    <div class="card"><pre id="log"></pre></div>
+  </main>
+  <script src="/assets/qrcode.min.js"></script>
+  <script type="module">
+    import { createSession } from "/lib/session.js";
+    const scene = document.getElementById("scene");
+    const voxelStage = document.getElementById("voxel-stage");
+    const log = document.getElementById("log");
+    const status = document.getElementById("transport-status");
+    const shareLink = document.getElementById("share-link");
+    const shareQr = document.getElementById("share-qr");
+    const objectInput = document.getElementById("object");
+    const matrixInput = document.getElementById("matrix");
+    const submit = document.getElementById("submit");
+    const postStatus = document.getElementById("status");
+    const session = createSession();
+    const sessionId = localStorage.getItem("vg-session") || `vg-${Date.now()}`;
+    localStorage.setItem("vg-session", sessionId);
+
+    function render(events) {
+      const transforms = events.filter((evt) => evt.type === "scene.transform" && evt.payload);
+      const nodes = events.filter((evt) => evt.type === "node.add" && evt.payload);
+      const selected = new Set(
+        events
+          .filter((evt) => evt.type === "node.select" && evt.payload && evt.payload.id)
+          .map((evt) => evt.payload.id)
+      );
+      voxelStage.innerHTML = nodes.map((evt) => {
+        const id = evt.payload.id || evt.id;
+        const x = Number(evt.payload.x || 0);
+        const y = Number(evt.payload.y || 0);
+        const z = Number(evt.payload.z || 0);
+        const zSafe = Math.max(0, Math.min(10, z));
+        const left = 20 + (x % 360);
+        const top = 20 + (y % 180) - zSafe * 8;
+        const size = 16 + zSafe * 1.5;
+        const shadow = 8 + zSafe * 1.5;
+        const shadowAlpha = Math.max(0.08, 0.25 - zSafe * 0.01);
+        const classes = selected.has(id) ? "voxel selected" : "voxel";
+        return `<div class="${classes}" title="${id}" style="left:${left}px; top:${top}px; width:${size}px; height:${size}px; box-shadow:${shadow}px ${shadow}px 0 0 rgba(44,31,22,${shadowAlpha});"></div>`;
+      }).join("");
+      scene.innerHTML = transforms.map((evt) => {
+        const object = evt.payload.object || "object";
+        const matrix = evt.payload.matrix || [];
+        return `<h3>${object}</h3><pre>${JSON.stringify(matrix)}</pre>`;
+      }).join("");
+      log.textContent = transforms.map((e) => JSON.stringify(e)).join("\n");
+    }
+
+    async function loadEvents() {
+      const source = location.protocol === "file:" ? "../../data/events.jsonl" : "/data/events.jsonl";
+      const res = await fetch(source, { cache: "no-store" });
+      const text = await res.text();
+      const events = text.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+      render(events);
+    }
+
+    async function connect() {
+      if (location.protocol === "file:") return;
+      session.on((evt) => {
+        if (evt.type === "scene.transform") loadEvents();
+      });
+      await session.connect();
+      status.textContent = session.transportKind;
+    }
+
+    function renderShare() {
+      const link = `${location.origin}${location.pathname}#join=${sessionId}`;
+      shareLink.value = link;
+      if (window.QRCode) {
+        shareQr.innerHTML = "";
+        new QRCode(shareQr, { text: link, width: 128, height: 128 });
+      }
+    }
+
+    function sendTransform() {
+      if (location.protocol === "file:") {
+        postStatus.textContent = "Transport not connected.";
+        return;
+      }
+      const object = objectInput.value.trim() || "object";
+      let matrix;
+      try {
+        matrix = JSON.parse(matrixInput.value || "[]");
+      } catch {
+        postStatus.textContent = "Matrix must be valid JSON.";
+        return;
+      }
+      const now = Date.now();
+      const evt = {
+        id: `evt-scene-${now}`,
+        ts: Math.floor(now / 1000),
+        actor: "anon",
+        type: "scene.transform",
+        space: "scene",
+        payload: { object, matrix },
+      };
+      try {
+        session.send(evt);
+      } catch {
+        postStatus.textContent = "Invalid event.";
+        return;
+      }
+      postStatus.textContent = "Emitted.";
+    }
+
+    submit.addEventListener("click", sendTransform);
+    loadEvents();
+    connect();
+    renderShare();
+  </script>
+</body>
+</html>

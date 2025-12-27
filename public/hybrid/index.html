@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hybrid SVG + Canvas</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f7f2ea; color: #2c1f16; }
+    header { padding: 16px 20px; background: #fffdf7; border-bottom: 1px solid #e2d7c7; }
+    main { padding: 16px 20px; }
+    .status { margin-top: 8px; font-size: 0.9rem; color: #5a4a3e; }
+    .viewport { position: relative; width: 900px; height: 480px; border: 1px solid #e2d7c7; border-radius: 10px; overflow: hidden; background: #fffdf7; }
+    .viewport object, .viewport canvas { position: absolute; inset: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Hybrid SVG + Canvas</h1>
+    <p>SVG base from export, Canvas overlay for live cursors.</p>
+    <div class="status" id="selection-status">Selected: none</div>
+  </header>
+  <main>
+    <div class="viewport">
+      <object id="svg-base" type="image/svg+xml" data="/svg/"></object>
+      <canvas id="overlay" width="900" height="480"></canvas>
+    </div>
+  </main>
+  <script type="module">
+    import { createSession } from "/lib/session.js";
+    const svgObject = document.getElementById("svg-base");
+    const canvas = document.getElementById("overlay");
+    const ctx = canvas.getContext("2d");
+    const status = document.getElementById("selection-status");
+    const session = createSession();
+
+    function drawCursor(evt) {
+      if (evt.type !== "cursor.move") return;
+      ctx.fillStyle = "#a24b2d";
+      ctx.beginPath();
+      ctx.arc(evt.payload.x, evt.payload.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function attachSvgBridge() {
+      const svgWindow = svgObject.contentWindow;
+      if (!svgWindow) return;
+      svgWindow.addEventListener("vg-node-select", (event) => {
+        const id = event?.detail?.id || "unknown";
+        status.textContent = `Selected node: ${id}`;
+        session.send({ type: "node.select", space: "canvas", payload: { id } });
+      });
+      svgWindow.addEventListener("vg-edge-select", (event) => {
+        const id = event?.detail?.id || "unknown";
+        status.textContent = `Selected edge: ${id}`;
+        session.send({ type: "edge.select", space: "canvas", payload: { id } });
+      });
+    }
+
+    function connect() {
+      if (location.protocol === "file:") return;
+      session.on(drawCursor);
+      session.connect();
+    }
+
+    svgObject.addEventListener("load", attachSvgBridge);
+    connect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+[Unit]
+Description=Virtual Revelation Status Timer
+
+[Timer]
+OnCalendar=*:0/2
+Persistent=false
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

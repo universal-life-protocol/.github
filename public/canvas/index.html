@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shared Canvas (MVP)</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f7f2ea; color: #2c1f16; }
+    header { padding: 16px 20px; background: #fffdf7; border-bottom: 1px solid #e2d7c7; }
+    main { display: grid; gap: 12px; padding: 16px 20px; }
+    canvas { background: #fffdf7; border: 1px solid #e2d7c7; border-radius: 10px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { background: #fffdf7; border: 1px solid #e2d7c7; border-radius: 10px; padding: 12px; }
+    button { padding: 6px 10px; border: 1px solid #a24b2d; background: #a24b2d; color: #fff; border-radius: 6px; cursor: pointer; }
+    pre { margin: 0; font-size: 12px; max-height: 220px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Shared Canvas (MVP)</h1>
+    <p>Reads from <code>data/events.jsonl</code> and renders a minimal view.</p>
+  </header>
+  <main>
+    <div class="row">
+      <div class="card">
+        <button id="reload">Reload Events</button>
+      </div>
+      <div class="card">
+        <div>Events loaded: <span id="count">0</span></div>
+        <div>Transport: <span id="transport-status">connecting</span></div>
+      </div>
+    </div>
+    <canvas id="board" width="900" height="480"></canvas>
+    <div class="card">
+      <h2>Share</h2>
+      <div class="row">
+        <div>
+          <label for="share-link">Link</label>
+          <input id="share-link" readonly />
+        </div>
+        <div>
+          <label>QR</label>
+          <div id="share-qr"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <details>
+        <summary>Advanced: WebRTC Dial</summary>
+        <div class="row">
+          <div>
+            <label for="offer">Offer</label>
+            <textarea id="offer" rows="4" placeholder="Create or paste offer"></textarea>
+            <button id="create-offer">Create Offer</button>
+          </div>
+          <div>
+            <label for="answer">Answer</label>
+            <textarea id="answer" rows="4" placeholder="Paste answer"></textarea>
+            <button id="accept-answer">Accept Answer</button>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div class="card">
+      <pre id="log"></pre>
+    </div>
+  </main>
+  <script src="/assets/qrcode.min.js"></script>
+  <script type="module">
+    import { createSession } from "/lib/session.js";
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+    const log = document.getElementById("log");
+    const count = document.getElementById("count");
+    const transportStatus = document.getElementById("transport-status");
+    const shareLink = document.getElementById("share-link");
+    const shareQr = document.getElementById("share-qr");
+    const offer = document.getElementById("offer");
+    const answer = document.getElementById("answer");
+    const createOfferBtn = document.getElementById("create-offer");
+    const acceptAnswerBtn = document.getElementById("accept-answer");
+    let sentAt = 0;
+    let db;
+    const logLines = [];
+    const session = createSession();
+    const sessionId = localStorage.getItem("vg-session") || `vg-${Date.now()}`;
+    localStorage.setItem("vg-session", sessionId);
+
+    function clearCanvas() {
+      ctx.fillStyle = "#fffdf7";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#e2d7c7";
+      ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
+    }
+
+    function drawEvent(evt) {
+      if (evt.type === "cursor.move") {
+        ctx.fillStyle = "#a24b2d";
+        ctx.beginPath();
+        ctx.arc(evt.payload.x, evt.payload.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (evt.type === "node.add") {
+        ctx.fillStyle = "#2c1f16";
+        ctx.fillRect(evt.payload.x - 4, evt.payload.y - 4, 8, 8);
+      }
+      if (evt.type === "edge.add") {
+        ctx.strokeStyle = "#2c1f16";
+        ctx.beginPath();
+        ctx.moveTo(evt.payload.x1, evt.payload.y1);
+        ctx.lineTo(evt.payload.x2, evt.payload.y2);
+        ctx.stroke();
+      }
+    }
+
+    function appendLog(evt) {
+      logLines.push(JSON.stringify(evt));
+      log.textContent = logLines.slice(-200).join("\n");
+      count.textContent = logLines.length.toString();
+    }
+
+    function openDb() {
+      return new Promise((resolve) => {
+        if (!("indexedDB" in window)) return resolve(null);
+        const req = indexedDB.open("virtual-revelation", 1);
+        req.onupgradeneeded = () => {
+          const dbRef = req.result;
+          if (!dbRef.objectStoreNames.contains("events")) {
+            dbRef.createObjectStore("events", { keyPath: "id" });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function storeEvent(evt) {
+      if (!db || evt.ephemeral === true) return;
+      const tx = db.transaction("events", "readwrite");
+      tx.objectStore("events").put(evt);
+    }
+
+    async function loadFromDb() {
+      if (!db) return [];
+      return new Promise((resolve) => {
+        const tx = db.transaction("events", "readonly");
+        const req = tx.objectStore("events").getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      });
+    }
+
+    function parseJsonl(text) {
+      return text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+    }
+
+    async function loadEvents() {
+      clearCanvas();
+      logLines.length = 0;
+      const cached = await loadFromDb();
+      cached.forEach((evt) => {
+        drawEvent(evt);
+        appendLog(evt);
+      });
+      try {
+        const source = location.protocol === "file:" ? "../../data/events.jsonl" : "/data/events.jsonl";
+        const res = await fetch(source, { cache: "no-store" });
+        const text = await res.text();
+        const events = parseJsonl(text);
+        events.forEach((evt) => {
+          drawEvent(evt);
+          appendLog(evt);
+          storeEvent(evt);
+        });
+      } catch (err) {
+        log.textContent = `Failed to load events: ${err}`;
+      }
+    }
+
+    function updateTransportStatus() {
+      transportStatus.textContent = session.transportKind;
+    }
+
+    async function connectTransport() {
+      if (location.protocol === "file:") return;
+      session.on((evt) => {
+        drawEvent(evt);
+        appendLog(evt);
+        storeEvent(evt);
+      });
+      await session.connect();
+      updateTransportStatus();
+      setupManualDial();
+    }
+
+    canvas.addEventListener("mousemove", (event) => {
+      if (location.protocol === "file:") return;
+      const now = Date.now();
+      if (now - sentAt < 60) return;
+      sentAt = now;
+      const rect = canvas.getBoundingClientRect();
+      const payload = {
+        x: Math.round(event.clientX - rect.left),
+        y: Math.round(event.clientY - rect.top),
+      };
+      const evt = {
+        id: `evt-${now}`,
+        ts: Math.floor(now / 1000),
+        actor: "anon",
+        type: "cursor.move",
+        space: "canvas",
+        payload,
+        ephemeral: true,
+      };
+      try {
+        session.send(evt);
+      } catch {
+        // ignore
+      }
+    });
+
+    document.getElementById("reload").addEventListener("click", loadEvents);
+    clearCanvas();
+    openDb().then((dbRef) => {
+      db = dbRef;
+      loadEvents();
+      connectTransport();
+    });
+
+    function renderShare() {
+      const link = `${location.origin}${location.pathname}#join=${sessionId}`;
+      shareLink.value = link;
+      if (window.QRCode) {
+        shareQr.innerHTML = "";
+        new QRCode(shareQr, { text: link, width: 128, height: 128 });
+      }
+    }
+
+    function setupManualDial() {
+      if (!session.transport.manual) return;
+      createOfferBtn.addEventListener("click", async () => {
+        offer.value = await session.transport.manual.createOffer();
+      });
+      acceptAnswerBtn.addEventListener("click", async () => {
+        if (!answer.value.trim()) return;
+        await session.transport.manual.acceptAnswer(answer.value.trim());
+      });
+    }
+
+    renderShare();
+  </script>
+</body>
+</html>

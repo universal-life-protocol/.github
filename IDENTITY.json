@@ -1,0 +1,9 @@
+{
+  "name": "tetragrammatron",
+  "codename": "virtual-revelation",
+  "genesis": "genesis-protocol",
+  "truth": "event-log",
+  "projections": ["svg", "gltf", "physics", "audio"],
+  "authority": "self-hosted",
+  "version": "0.1.0"
+}

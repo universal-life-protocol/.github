@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Status · Virtual Revelation</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .mono { font-family: "Source Code Pro", "Menlo", monospace; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Status</p>
+      <h1>System Health</h1>
+      <p class="lead">Live status from the production suite. Refreshes every 30 seconds.</p>
+    </header>
+
+    <section class="status-grid" id="statusGrid">
+      <div class="panel">
+        <h3>WebSocket</h3>
+        <p class="mono" id="wsStatus">loading</p>
+      </div>
+      <div class="panel">
+        <h3>Timers</h3>
+        <ul>
+          <li>Render: <span class="mono" id="timerRender">loading</span></li>
+          <li>SVG Export: <span class="mono" id="timerSvg">loading</span></li>
+          <li>World Pack: <span class="mono" id="timerWorld">loading</span></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Artifacts</h3>
+        <ul>
+          <li>SVG: <span class="mono" id="artifactSvg">loading</span></li>
+          <li>GLTF: <span class="mono" id="artifactGltf">loading</span></li>
+          <li>Audio: <span class="mono" id="artifactAudio">loading</span></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Latest Build</h3>
+        <p class="mono" id="latestBuild">loading</p>
+        <p class="mono" id="version">loading</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function loadStatus() {
+      try {
+        const res = await fetch('/status.json', { cache: 'no-store' });
+        const data = await res.json();
+        document.getElementById('wsStatus').textContent = data.ws;
+        document.getElementById('timerRender').textContent = data.timers.render;
+        document.getElementById('timerSvg').textContent = data.timers.svg_export;
+        document.getElementById('timerWorld').textContent = data.timers.world_pack;
+        document.getElementById('artifactSvg').textContent = formatArtifact(data.artifacts.svg);
+        document.getElementById('artifactGltf').textContent = formatArtifact(data.artifacts.gltf);
+        document.getElementById('artifactAudio').textContent = formatArtifact(data.artifacts.audio);
+        document.getElementById('latestBuild').textContent = data.last_world_build || 'unknown';
+        document.getElementById('version').textContent = 'version ' + data.version;
+      } catch (err) {
+        document.getElementById('wsStatus').textContent = 'unavailable';
+      }
+    }
+
+    function formatArtifact(info) {
+      if (!info) return 'unknown';
+      if (info.state === 'missing') return 'missing';
+      if (info.age_hours == null) return info.state;
+      return info.state + ' (' + info.age_hours + 'h)';
+    }
+
+    loadStatus();
+    setInterval(loadStatus, 30000);
+  </script>
+</body>
+</html>

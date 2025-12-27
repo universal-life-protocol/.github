@@ -1,0 +1,15 @@
+[submodule "core/atom"]
+	path = core/atom
+	url = git@github.com:universal-life-protocol/atom.git
+[submodule "core/genesis-protocol"]
+	path = core/genesis-protocol
+	url = git@github.com:universal-life-protocol/genesis-protocol.git
+[submodule "core/tetragrammatron-os"]
+	path = core/tetragrammatron-os
+	url = git@github.com:universal-life-protocol/tetragrammatron-os.git
+[submodule "core/virtual-revelation"]
+	path = core/virtual-revelation
+	url = git@github.com:universal-life-protocol/virtual-revelation.git
+[submodule "core/extensions"]
+	path = core/extensions
+	url = git@github.com:universal-life-protocol/extensions.git

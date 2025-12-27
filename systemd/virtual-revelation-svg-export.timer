@@ -1,0 +1,10 @@
+[Unit]
+Description=Virtual Revelation SVG Export Timer
+
+[Timer]
+OnCalendar=*:0/10
+Persistent=false
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

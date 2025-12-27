@@ -1,0 +1,15 @@
+[Unit]
+Description=Virtual Revelation Status Update
+
+[Service]
+Type=oneshot
+Environment=TETRA_ROOT=%h/tetragrammatron
+WorkingDirectory=%h/tetragrammatron
+ExecStart=/bin/sh -lc 'ROOT="${TETRA_ROOT:-$HOME/tetragrammatron}"; /usr/bin/node "$ROOT/tools/update-status.js"'
+
+# Hardening (user service)
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=%h/tetragrammatron/public %h/tetragrammatron/tools

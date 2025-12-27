@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projection Broker</title>
+  <style>
+    body { font-family: sans-serif; background: #f7f2ea; color: #2c1f16; margin: 0; }
+    header { padding: 18px 22px; background: #fffdf7; border-bottom: 1px solid #e2d7c7; }
+    main { padding: 18px 22px; display: grid; gap: 16px; max-width: 920px; }
+    .card { background: #fffdf7; border: 1px solid #e2d7c7; border-radius: 12px; padding: 12px 14px; }
+    h1 { margin: 0 0 6px; font-size: 22px; }
+    label { display: block; margin: 10px 0 4px; font-size: 13px; color: #6b5f54; }
+    input, select, textarea { width: 100%; padding: 8px; border: 1px solid #e2d7c7; border-radius: 8px; font-size: 14px; }
+    textarea { min-height: 110px; font-family: ui-monospace, "SFMono-Regular", "Courier New", monospace; }
+    button { padding: 8px 12px; border: 1px solid #a24b2d; background: #a24b2d; color: #fff; border-radius: 8px; cursor: pointer; }
+    .row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+    .hint { font-size: 12px; color: #6b5f54; margin-top: 6px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Projection Broker</h1>
+    <p class="hint">One page. Pick a style, pick a source, open a workspace.</p>
+  </header>
+  <main>
+    <div class="card">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="simple" selected>Simple</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+
+    <div class="card" id="simple-block">
+      <div class="row">
+        <div>
+          <label for="simple-source">What do you want to explore?</label>
+          <select id="simple-source">
+            <option value="file:/home/main/devops/dev-docs/genesis_bootstrap/docs/BOOTSTRAP.org">A document</option>
+            <option value="dim:2D">A concept map</option>
+            <option value="dim:2D">A graph</option>
+            <option value="dim:3D">A previous construction</option>
+            <option value="dim:0D">Start blank</option>
+          </select>
+        </div>
+        <div>
+          <label for="template">How should it look?</label>
+          <select id="template">
+            <option value="calm">Calm / Minimal</option>
+            <option value="technical">Technical / Precise</option>
+            <option value="visual">Visual / Creative</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Template preview</label>
+          <div class="card" id="template-preview">Select a template to see details.</div>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div class="hint">Templates change appearance only; they do not modify the graph.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="power">How powerful should it be?</label>
+          <select id="power">
+            <option value="browser" selected>Browser only (fast, simple)</option>
+            <option value="browser">With AI assistant (optional)</option>
+            <option value="vnc">Advanced workspace (VNC)</option>
+          </select>
+        </div>
+        <div>
+          <label for="open-label">Open Workspace</label>
+          <button id="open">Open</button>
+        </div>
+      </div>
+      <div class="hint">Default engine is browser. Advanced workspace uses VNC.</div>
+    </div>
+
+    <div class="card">
+      <h2>Share</h2>
+      <div class="row">
+        <div>
+          <label for="share-link">Link</label>
+          <input id="share-link" readonly />
+        </div>
+        <div>
+          <label>QR</label>
+          <div id="share-qr"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="advanced-block">
+      <div class="row">
+        <div>
+          <label for="engine">Render engine</label>
+          <select id="engine">
+            <option value="browser">browser</option>
+            <option value="svg">svg</option>
+            <option value="canvas">canvas</option>
+            <option value="vnc">vnc</option>
+          </select>
+        </div>
+        <div>
+          <label for="source">Render source</label>
+          <input id="source" value="dim:2D" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="layer">VNC layer (if engine=vnc)</label>
+          <input id="layer" value="index" />
+        </div>
+        <div>
+          <label for="node">Node ID (if engine=vnc)</label>
+          <input id="node" value="00" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="display">Display override (optional, :20-:59)</label>
+          <input id="display" placeholder=":24" />
+        </div>
+        <div>
+          <label for="notes">Notes</label>
+          <input id="notes" placeholder="Free text" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="advanced-template">Template</label>
+          <select id="advanced-template">
+            <option value="calm">Calm / Minimal</option>
+            <option value="technical">Technical / Precise</option>
+            <option value="visual">Visual / Creative</option>
+          </select>
+        </div>
+        <div>
+          <label for="build">Build command</label>
+          <button id="build">Build</button>
+        </div>
+      </div>
+      <div class="hint">Fixed display pool: :20 to :59. If blank, broker-cli picks the first free display.</div>
+    </div>
+
+    <div class="card">
+      <label for="command">Command</label>
+      <textarea id="command" spellcheck="false"></textarea>
+      <div class="hint">Run this from a shell. The broker is a one-shot launcher.</div>
+    </div>
+  </main>
+
+  <script src="/assets/qrcode.min.js"></script>
+  <script>
+    const mode = document.getElementById("mode");
+    const simpleBlock = document.getElementById("simple-block");
+    const advancedBlock = document.getElementById("advanced-block");
+    const command = document.getElementById("command");
+    const shareLink = document.getElementById("share-link");
+    const shareQr = document.getElementById("share-qr");
+
+    const simpleSource = document.getElementById("simple-source");
+    const template = document.getElementById("template");
+    const power = document.getElementById("power");
+    const open = document.getElementById("open");
+
+    const engine = document.getElementById("engine");
+    const source = document.getElementById("source");
+    const layer = document.getElementById("layer");
+    const node = document.getElementById("node");
+    const display = document.getElementById("display");
+    const advancedTemplate = document.getElementById("advanced-template");
+    const build = document.getElementById("build");
+    const templatePreview = document.getElementById("template-preview");
+
+    const templates = {
+      calm: {
+        label: "Calm / Minimal",
+        engine: "svg",
+        noise: "low",
+        motion: "reduced",
+        recommended_for: ["reading", "concept-mapping"],
+      },
+      technical: {
+        label: "Technical / Precise",
+        engine: "svg",
+        noise: "low",
+        motion: "none",
+        recommended_for: ["structure", "correctness", "inspection"],
+      },
+      visual: {
+        label: "Visual / Creative",
+        engine: "canvas",
+        noise: "medium",
+        motion: "ambient",
+        recommended_for: ["exploration", "spatial-intuition"],
+      },
+    };
+
+    function toggleMode() {
+      const isSimple = mode.value === "simple";
+      simpleBlock.classList.toggle("hidden", !isSimple);
+      advancedBlock.classList.toggle("hidden", isSimple);
+      buildCommand();
+    }
+
+    function buildCommandFromAdvanced() {
+      const parts = [
+        "node",
+        "~/virtual-revelation/tools/broker-cli.ts",
+        "--engine",
+        engine.value,
+        "--source",
+        source.value,
+        "--layer",
+        layer.value,
+        "--node",
+        node.value,
+        "--template",
+        advancedTemplate.value,
+      ];
+      if (display.value.trim()) {
+        parts.push("--display", display.value.trim());
+      }
+      command.value = parts.join(" ");
+    }
+
+    function buildCommandFromSimple() {
+      const engineValue = power.value;
+      const parts = [
+        "node",
+        "~/virtual-revelation/tools/broker-cli.ts",
+        "--engine",
+        engineValue,
+        "--source",
+        simpleSource.value,
+        "--layer",
+        "index",
+        "--node",
+        "00",
+        "--template",
+        template.value,
+      ];
+      command.value = parts.join(" ");
+    }
+
+    function updateTemplatePreview() {
+      const meta = templates[template.value];
+      if (!meta) {
+        templatePreview.textContent = "Select a template to see details.";
+        return;
+      }
+      templatePreview.innerHTML = `
+        <strong>${meta.label}</strong><br/>
+        Engine: ${meta.engine}<br/>
+        Noise: ${meta.noise}<br/>
+        Motion: ${meta.motion}<br/>
+        Recommended: ${meta.recommended_for.join(", ")}
+      `;
+    }
+
+    function buildCommand() {
+      if (mode.value === "simple") {
+        buildCommandFromSimple();
+      } else {
+        buildCommandFromAdvanced();
+      }
+    }
+
+    function renderShare() {
+      const sessionId = localStorage.getItem("vg-session") || `vg-${Date.now()}`;
+      localStorage.setItem("vg-session", sessionId);
+      const link = `${location.origin}${location.pathname}#join=${sessionId}`;
+      shareLink.value = link;
+      if (window.QRCode) {
+        shareQr.innerHTML = "";
+        new QRCode(shareQr, { text: link, width: 128, height: 128 });
+      }
+    }
+
+    mode.addEventListener("change", toggleMode);
+    build.addEventListener("click", buildCommand);
+    open.addEventListener("click", buildCommandFromSimple);
+    template.addEventListener("change", () => {
+      updateTemplatePreview();
+      buildCommandFromSimple();
+    });
+
+    toggleMode();
+    updateTemplatePreview();
+    renderShare();
+  </script>
+</body>
+</html>

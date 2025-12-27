@@ -1,0 +1,16 @@
+{
+  "input": "/home/main/devops/tetragrammatron/virtual-revelation/artifacts/examples/bench-events.jsonl",
+  "iterations": 1,
+  "summary": {
+    "svg": {
+      "min": 24.306872,
+      "max": 24.306872,
+      "mean": 24.306872
+    },
+    "physics": {
+      "min": 25557.482566,
+      "max": 25557.482566,
+      "mean": 25557.482566
+    }
+  }
+}

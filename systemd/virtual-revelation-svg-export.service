@@ -1,0 +1,15 @@
+[Unit]
+Description=Virtual Revelation SVG Export
+
+[Service]
+Type=oneshot
+Environment=TETRA_ROOT=%h/tetragrammatron
+WorkingDirectory=%h/tetragrammatron/core/virtual-revelation
+ExecStart=/bin/sh -lc 'ROOT="${TETRA_ROOT:-$HOME/tetragrammatron}"; /usr/bin/node "$ROOT/core/virtual-revelation/sdk/demo/svg-export.js"'
+
+# Hardening (user service)
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=%h/tetragrammatron/core/virtual-revelation/views %h/tetragrammatron/core/virtual-revelation/data

@@ -1,0 +1,8 @@
+mtllib svg-export.mtl
+o rect_shape_0
+usemtl node_default
+v 0 0 0
+v 8 0 0
+v 8 8 0
+v 0 8 0
+f 1 2 3 4

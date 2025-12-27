@@ -1,0 +1,16 @@
+[Unit]
+Description=Virtual Revelation Render
+Wants=virtual-revelation-render.timer
+
+[Service]
+Type=oneshot
+Environment=TETRA_ROOT=%h/tetragrammatron
+WorkingDirectory=%h/tetragrammatron/core/virtual-revelation
+ExecStart=/bin/sh -lc 'ROOT="${TETRA_ROOT:-$HOME/tetragrammatron}"; /usr/bin/node "$ROOT/core/virtual-revelation/tools/render-simple.ts"'
+
+# Hardening (user service)
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=%h/tetragrammatron/core/virtual-revelation/views %h/tetragrammatron/core/virtual-revelation/data

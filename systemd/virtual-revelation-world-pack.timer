@@ -1,0 +1,10 @@
+[Unit]
+Description=Virtual Revelation World Pack Timer
+
+[Timer]
+OnCalendar=hourly
+Persistent=false
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target
