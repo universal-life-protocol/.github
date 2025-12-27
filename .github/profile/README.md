@@ -1,0 +1,223 @@
+Universal Life Protocol (ULP)
+
+A protocol for defining, sharing, and transforming meaning across systems — without central authority.
+
+The Universal Life Protocol (ULP) is an open, composable framework for modeling identity, assets, computation, knowledge, and experience as relational structures rather than fixed platforms.
+
+ULP is not a product, a blockchain, or a single runtime.
+
+It is a protocol of protocols — a way to describe what exists, what is allowed, what is shared, and what is executed across human, computational, and virtual systems.
+
+
+---
+
+Core Principles
+
+ULP is guided by four non-negotiable principles:
+
+Freedom — participation is voluntary
+
+Autonomy — each node defines its own boundaries
+
+Sovereignty — identity and state are self-owned
+
+Reciprocity — value flows must be mutual and accountable
+
+
+These are not enforced by ideology, but by structure.
+
+
+---
+
+What This Organization Contains
+
+This GitHub organization hosts the reference implementations, specifications, and tools that make the protocol practical.
+
+🧬 Core Systems
+
+ATOM
+
+A minimal, composable unit for representing:
+
+identity
+
+assets
+
+documents
+
+services
+
+permissions
+
+provenance
+
+
+Atoms can power marketplaces, ledgers, universities, knowledge graphs, pub/sub systems, and virtual worlds — without changing the underlying model.
+
+Genesis Protocol
+
+A protocol for definition before execution.
+
+Genesis provides:
+
+INCLUDE / IGNORE filters
+
+SCHEMA (shared, verifiable structure)
+
+SCHEME (contextual, executable behavior)
+
+
+Genesis is how systems pause, reflect, and agree before acting.
+
+Tetragrammatron OS
+
+A low-level, deterministic substrate for:
+
+bytecode execution
+
+symbolic projection
+
+geometry-backed computation
+
+WebAssembly + POSIX environments
+
+
+It treats hardware, software, and structure as relations, not abstractions.
+
+Virtual Revelation
+
+A distributed rendering, pub/sub, and world-pack system for:
+
+live graphs
+
+audio/visual worlds
+
+shared state
+
+observers and projections
+
+
+This is how ULP becomes experiential.
+
+
+---
+
+Project Structure (High-Level)
+
+core/
+  atom/                 → identity, assets, signatures
+  genesis-protocol/     → definition & constraint system
+  tetragrammatron-os/   → execution substrate
+  virtual-revelation/   → rendering, pubsub, worlds
+
+docs/                   → architecture, operations, security
+public/                 → demos, SDKs, visualizations
+systemd/                → services & timers
+tools/                  → utilities
+
+Each subsystem is independently useful and loosely coupled.
+
+
+---
+
+What ULP Is (and Is Not)
+
+ULP is:
+
+composable
+
+federated
+
+protocol-first
+
+implementation-agnostic
+
+usable with shell, Scheme, JS, WASM, and HTML
+
+suitable for markets, education, knowledge, and art
+
+
+ULP is not:
+
+a religion
+
+a closed platform
+
+a token scheme
+
+a social network
+
+a centralized authority
+
+
+Meaning emerges from relationships, not enforcement.
+
+
+---
+
+Who This Is For
+
+Engineers who care about structure over hype
+
+Researchers exploring identity, computation, or knowledge systems
+
+Artists building virtual or symbolic worlds
+
+Educators designing non-coercive learning systems
+
+Anyone who believes systems should pause before they act
+
+
+You don’t need to agree with everything here to participate.
+
+
+---
+
+How to Start
+
+Read the root README.md
+
+Explore core/atom/QUICKSTART.md
+
+Review core/genesis-protocol/README.org
+
+Run first-run.sh to launch a local environment
+
+Browse the public/ demos in a browser
+
+
+
+---
+
+Contribution Philosophy
+
+Contributions are welcome — code, docs, questions, critique.
+
+The only requirement is good faith:
+
+define before executing
+
+explain before asserting
+
+respect autonomy
+
+honor reciprocity
+
+
+There is no rush.
+There is no hierarchy of belief.
+There is only shared structure.
+
+
+---
+
+License & Status
+
+ULP is open-source, actively evolving, and intentionally unfinished.
+
+The protocol is stable enough to use — and flexible enough to change.
+
+
+---
+
+> Only what responds can remain.
