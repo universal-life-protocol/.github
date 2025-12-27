@@ -172,7 +172,8 @@ export function createTransport(config = {}) {
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        channel.postMessage({ type: "ice", candidate: event.candidate });
+        const candidate = event.candidate.toJSON ? event.candidate.toJSON() : event.candidate;
+        channel.postMessage({ type: "ice", candidate });
       }
     };
 
